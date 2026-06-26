@@ -76,3 +76,20 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 15px;
 .abtn.secondary { background: #F8F7F4; color: #1A1A1A; border: 0.5px solid rgba(0,0,0,0.08); box-shadow: 0 1px 0 rgba(255,255,255,0.9) inset; }
 .abtn.secondary:hover { background: #F0EFEA; }
 .abtn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+@media (max-width: 900px) {
+  body { height: auto; overflow: auto; }
+  .app { height: auto; min-height: 100vh; }
+  .main { grid-template-columns: 1fr; grid-template-rows: auto auto auto; flex: none; }
+  .left-panel { grid-column: 1; grid-row: 1; max-height: none; overflow-y: visible; }
+  .board-card { grid-column: 1; grid-row: 2; height: calc(100vw - 48px); max-height: calc(100vw - 48px); overflow: hidden; }
+  .right-panel { grid-column: 1; grid-row: 3; overflow-y: visible; }
+  .board-wrap { height: calc(100vw - 48px - 60px); min-height: 0; }
+  .board-inner { height: 100%; width: 100%; }
+  .overlay-svg, .drag-preview { overflow: hidden; }
+}
+
+@media (max-width: 600px) {
+  .board-card { height: calc(100vw - 48px); max-height: calc(100vw - 48px); }
+  .board-wrap { height: calc(100vw - 48px - 60px); }
+}

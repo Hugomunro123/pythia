@@ -545,12 +545,21 @@ document.getElementById('monte-btn').addEventListener('click', () => {
   let targetHeights = new Array(NBINS).fill(0), barH = new Array(NBINS).fill(0);
   barHeights = barH;
   let gMin = Infinity, gMax = -Infinity, animFrame = null;
+  let pMin = 0, pMax = 1;
 
   function computeBins() {
     if (results.length < 2) return;
     gMin = Math.min(...results); gMax = Math.max(...results);
-    const range = gMax - gMin || 1, counts = new Array(NBINS).fill(0);
-    results.forEach(v => { counts[Math.min(NBINS-1, Math.floor((v-gMin)/range*NBINS))]++; });
+    const sorted = [...results].sort((a,b) => a-b);
+    pMin = gMin;
+    pMax = sorted[Math.floor(sorted.length * 0.99)];
+    if (pMax <= pMin) pMax = gMax;
+    const range = pMax - pMin || 1, counts = new Array(NBINS).fill(0);
+    results.forEach(v => {
+      const t = (v - pMin) / range;
+      const bin = Math.min(NBINS - 1, Math.max(0, Math.floor(t * NBINS)));
+      counts[bin]++;
+    });
     const maxC = Math.max(...counts);
     targetHeights = counts.map(c => c / maxC);
   }
@@ -558,20 +567,36 @@ document.getElementById('monte-btn').addEventListener('click', () => {
   function drawCDF() {
     if (results.length < 100) return;
     const sorted = [...results].sort((a,b) => a-b);
-    const range = gMax - gMin || 1;
+    const range = pMax - pMin || 1;
     ctx.beginPath();
     ctx.strokeStyle = 'rgba(175,175,185,0.88)';
     ctx.lineWidth = 1.6;
     ctx.moveTo(0, H);
     for (let i = 0; i < sorted.length; i++) {
-      const x = ((sorted[i] - gMin) / range) * W;
-      const yPrev = H - (i / sorted.length) * H;
-      const yNext = H - ((i+1) / sorted.length) * H;
-      ctx.lineTo(x, yPrev);
-      ctx.lineTo(x, yNext);
+        const x = Math.min(W, ((sorted[i] - pMin) / range) * W);
+        const yPrev = H - (i / sorted.length) * H;
+        const yCur  = H - ((i + 1) / sorted.length) * H;
+        ctx.lineTo(x, yPrev);
+        ctx.lineTo(x, yCur);
     }
     ctx.lineTo(W, 0);
     ctx.stroke();
+
+    ctx.fillStyle = 'rgba(175,175,185,0.88)';
+    ctx.font = `9px Inter, sans-serif`;
+    ctx.textAlign = 'right';
+    ctx.fillText('1', W - 2, 9);
+    ctx.fillText('0', W - 2, H - 2);
+
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(175,175,185,0.3)';
+    ctx.lineWidth = 0.8;
+    ctx.setLineDash([3, 3]);
+    ctx.moveTo(0, H * 0.5);
+    ctx.lineTo(W, H * 0.5);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillText('0.5', W - 2, H * 0.5 - 2);
   }
 
   function animateBars() {
@@ -579,10 +604,10 @@ document.getElementById('monte-btn').addEventListener('click', () => {
     ctx.clearRect(0, 0, W, H);
     const bw = W / NBINS;
     const mean = results.length ? results.reduce((a,b) => a+b, 0) / results.length : 0;
-    const range = gMax - gMin || 1;
+    const range = pMax - pMin || 1;
     barH.forEach((h, idx) => {
       if (h <= 0.001) return;
-      const bH = h * H, bc = gMin + (idx + 0.5) * (range / NBINS);
+      const bH = h * H, bc = pMin + (idx + 0.5) * (range / NBINS);
       const t = Math.min(1, Math.abs(bc - mean) / (range * 0.5));
       ctx.fillStyle = `rgb(${Math.round(160+t*60)},${Math.round(80-t*60)},${Math.round(60-t*40)})`;
       ctx.beginPath();
